@@ -2,6 +2,8 @@ import json
 from collections import defaultdict
 from rich import print
 
+# TODO: Somehow parse *WK from ztm to get more connections
+
 # : P+R Al. Krakowska – … – Chałubińskiego – al. Jana Pawła II – Stawki – … – MARYMONT-POTOK
 
 # SIGMA.JS FORMAT
