@@ -24,7 +24,7 @@ edge = {
         "size": 1
     }
 }
-
+#/ SIGMA.JS FORMAT
 
 nodes = []
 edges = []
@@ -33,6 +33,7 @@ already_added_nodes = []
 already_added_edges = []
 
 class StopPart:
+    """ Object that holds refences to previous object like a list, but this can store multible references allowing for branching """
     def __init__(self, my_id, road, *args):
         self.my_id = my_id
         self.road = road
@@ -45,17 +46,8 @@ class StopPart:
         else:
             return '<START' + '→' + self.my_id + ' | ' + self.road + '>'
 
-        # out = ''
-        # for par in self.parents:
-        #     if par is None:
-        #         par = ''
-        #     out += f'{par} {self.my_id}\n'
 
-        # return out
-    pass
-    # Basically, its an object that holds refences to previous object like a list, but this can store multible references allowing for branching
-
-FILE = True
+FILE = False
 
 with open('routes.json', 'r') as f:
     routes = json.load(f)
@@ -63,43 +55,15 @@ with open('routes.json', 'r') as f:
 with open('stop_groups.json', 'r') as f:
     stops = json.load(f)
 
-curated = [
-    routes["1"]["routes"]["TP-ANN"],
-    routes["3"]["routes"]["TP-ANN"],
-    routes["4"]["routes"]["TP-ZEW"],
-    routes["10"]["routes"]["TO-GOR"],
-]
 
 _i = 0
 
 road_matrix = {'stop': 'roadname'}
 
-# for line in curated:
 for line in routes:
     # Save only trams
     if not routes[line]["type"] in ["LINIA TRAMWAJOWA", "LINIA TRAMWAJOWA OKRESOWA"]:
         continue
-
-    if routes[line]["type"] == "LINIA TRAMWAJOWA":
-        MODE_COLOR = "red"
-
-    if routes[line]["type"] == "LINIA ZWYK\u0141A":
-        MODE_COLOR = "magenta"
-
-    if routes[line]["type"] == "LINIA STREFOWA OKRESOWA":
-        MODE_COLOR = "magenta"
-
-    if routes[line]["type"] == "LINIA PRZYSPIESZONA OKRESOWA":
-        MODE_COLOR = "red"
-
-    if routes[line]["type"] == "LINIA PRZYSPIESZONA":
-        MODE_COLOR = "red"
-
-    if routes[line]["type"] == "LINIA STREFOWA":
-        MODE_COLOR = "green"
-
-    if routes[line]["type"] == "LINIA STREFOWA UZUPE\u0141NIAJ\u0104CA":
-        MODE_COLOR = "blue"
 
     for r in routes[line]["routes"]:
         
@@ -138,7 +102,7 @@ for line in routes:
                             name = "no name provided"
                             x = 21.05
                             y = 52.20
-                            print('he', event["id"])
+                            print('!?', event["id"])
 
                         nodes.append({
                             "key": event["id"],
@@ -147,7 +111,7 @@ for line in routes:
                                 "y": y,
                                 "label": name + " " + num,
                                 "size": 4.0,
-                                "color": MODE_COLOR,
+                                # "color": MODE_COLOR,
                                 "road_name": current_road
                             }
                         })
@@ -163,20 +127,13 @@ for line in routes:
                         "attributes": {
                             "size": 2.0,
                             "type": "arrow",
-                            "colors": MODE_COLOR
+                            # "colors": MODE_COLOR
                         }
                     })
                 _i += 1
 
-                # roads[current_road].append(event["id"])
-                # roads[current_road].append(StopPart(event["id"], current_road, previous_stop))
                 previous_stop = event["id"]
-                # print(previous_stop, 'aAAA')
 
-    # print(roads)
-    # for name in roads:
-    #     for relation in roads[name]:
-    #         print(relation)
 
 # Now instead of having (*parents) -> stop convert to stop -> (*children)
 new_form = {'stop': ['child1', 'child2']}
@@ -198,14 +155,3 @@ if FILE:
             "nodes": nodes,
             "edges": edges
         }, f, indent=4)
-
-# Is this below needed anymore?
-# Now lets look for 2 pairs of roads, like so
-# trip1: A - B - C
-# trip2: A - B - D
-# Just 2 road names have to be in order
-
-# for alotofdata in curated:
-#     print(alotofdata["route_roads_desc"])
-
-
