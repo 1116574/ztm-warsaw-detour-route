@@ -31,6 +31,10 @@ altered_roads = 'ŻERAŃ FSO - … - most Gdański - Słomińskiego - Okopowa - 
 # altered_roads = 'P+R Al. Krakowska - … - Chałubińskiego - al. Jana Pawła II - Stawki - … - MARYMONT-POTOK'.split(' - ')[2:-2]
 
 
+# 26, but different
+altered_roads = 'Towarowa - Grójecka - Banacha'.split(' - ')
+original_stops = ["605914","605908","605906","605801","602703","602603","602503","602403","604603","604705","506506","506206","516106","516104","506405","506305","507703","506103","503407","506005","505805","505703","501207","500103","502103","501001","500905","500803","500703","500603","500503","500403","500303","500203","708505","709909","704701","116302","100307","100203","100103","200106","200204","200304","200404","200504","200604","200702","200804","200813"]
+
 RECURSION_STEPS = [6, 8, 12]  # we try searching recursively for 6 stops, if thast fails then for 8...
 
 with open('stop_groups.json', 'r') as f:
@@ -162,7 +166,7 @@ def main(original_stops, route_roads, altered_roads):
             # Do we leave altered mode?
             if current_stop in ending_stops:
                 print('We are done here')
-                running = False
+                running = False  # TODO: leave the mode instead of temrinating
 
             print('Route:', current_route)
             print('Currently on:', altered_roads[alt_index])
@@ -173,16 +177,20 @@ def main(original_stops, route_roads, altered_roads):
 
             # Now, if only one connection is avaliable, take it
             if len(aval_stops) == 1:
-                current_route.append(aval_stops[0])
-                # print(current_route)
                 # Check if road has changed
                 if road_matrix[aval_stops[0]] == altered_roads[alt_index]:  # road stays the same
                     pass
+                elif altered_roads[alt_index] == altered_roads[-1]:  # check if its last road
+                    # We are on last road, and next connection has a different road ('if' higher up catches same road)
+                    return current_route
+                    running = False
                 elif road_matrix[aval_stops[0]] == altered_roads[alt_index+1]:  # road has changed to next one
                     alt_index += 1
                 else:  # road has changed to something we dont want, but we will ignore and hope it soon changes to what we want
                     print('uh oh unwanted road')
                     pass
+
+                current_route.append(aval_stops[0])  # actually take the connection if all went well
 
                 continue
             
