@@ -3,3 +3,7 @@ stop_groups.json
 road_matrix.json
 data.json
 routes.json
+timetable.7z
+__pycache__
+.pytest_cache
+RA*.TXT
