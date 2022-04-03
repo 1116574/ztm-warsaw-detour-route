@@ -3,6 +3,7 @@ from collections import defaultdict
 from rich import print
 
 # TODO: Somehow parse *WK from ztm to get more connections
+# TODO: Parse "location" field as an alternative road name
 
 # : P+R Al. Krakowska – … – Chałubińskiego – al. Jana Pawła II – Stawki – … – MARYMONT-POTOK
 

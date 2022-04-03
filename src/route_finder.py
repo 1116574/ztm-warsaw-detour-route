@@ -179,69 +179,74 @@ def main(original_stops, altered_roads):
                     # print(s, ending_stops)
                     running = False
 
-            # If we havent left, see if any are on our next road
-            print('  Now looking for (normally):', altered_roads[alt_index+1])
-            candidates = []
-            for s in aval_stops:
-                print('   ', altered_roads[alt_index+1], road_matrix[s])
-                if compare(altered_roads[alt_index+1], road_matrix[s]):
-                    # In case 2 options pop up
-                    candidates.append(s)
+            # See if we are on our last altered_road
+            if altered_roads[alt_index] != altered_roads[-1]:                  # if not, see if we can go to next road
+                # See if any are on our next road
+                print('  Now looking for (normally):', altered_roads[alt_index+1])
+                candidates = []
+                for s in aval_stops:
+                    print('   ', altered_roads[alt_index+1], road_matrix[s])
+                    if compare(altered_roads[alt_index+1], road_matrix[s]):
+                        # In case 2 options pop up
+                        candidates.append(s)
 
-            if len(candidates) == 1:
-                print('  Success - found alt road', altered_roads[alt_index+1])
-                alt_index += 1
-                current_route.append(candidates[0])
-                skip = True
-            elif len(candidates) == 0:
-                pass
-            else:  # we have two (or more) option with same street. Usually happens bc of T-junctions
-                # Solution: Go recursively over each until we find next road lol
-                # but first check if there is next road
-                if len(altered_roads) <= alt_index+2:
-                    # this is last road. instead of looking for next road lets look for next stop
-                    print('  Many options:', candidates, '- beginning recursive search until stops', ending_stops)
-                    search_type = 'stops'
-                else:
-                    print('  Many options:', candidates, '- beginning recursive search until street', altered_roads[alt_index+2])
-                    search_type = 'streets'
+                if len(candidates) == 1:
+                    print('  Success - found alt road', altered_roads[alt_index+1])
+                    alt_index += 1
+                    current_route.append(candidates[0])
+                    skip = True
+                elif len(candidates) == 0:
+                    pass  # this should throw an error (?)
+                else:  # we have two (or more) option with same street. Usually happens bc of T-junctions
+                    # Solution: Go recursively over each until we find next road lol
+                    # but first check if there is next road
+                    if len(altered_roads) <= alt_index+2:
+                        # this is last road. instead of looking for next road lets look for next stop
+                        print('  Many options:', candidates, '- beginning recursive search until stops', ending_stops)
+                        search_type = 'stops'
+                    else:
+                        print('  Many options:', candidates, '- beginning recursive search until street', altered_roads[alt_index+2])
+                        search_type = 'streets'
 
-                trying = True  # outer break
-                for step in RECURSION_STEPS:
-                    if not trying:
-                        break
-                    for s in candidates:
-                        if search_type == 'streets':
-                            suc, route = searcher(s, target_road=altered_roads[alt_index+2], recursion_depth=step)
-                        elif search_type == 'stops':
-                            suc, route = searcher(s, target_stops=ending_stops, recursion_depth=step)
+                    trying = True  # outer break
+                    for step in RECURSION_STEPS:
+                        if not trying:
+                            break
+                        for s in candidates:
+                            if search_type == 'streets':
+                                suc, route = searcher(s, target_road=altered_roads[alt_index+2], recursion_depth=step)
+                            elif search_type == 'stops':
+                                suc, route = searcher(s, target_stops=ending_stops, recursion_depth=step)
+
+                            if suc:
+                                trying = False
+                                break
 
                         if suc:
-                            trying = False
+                            print('  Found answer with option', s, route)
+                            alt_index += 2
+                            current_route += route
+                            if search_type == 'stops':
+                                print('We are done here, calling from candidates')
+                                cut = ending_stops.index(route[-1])
+                                print(current_route + ending_stops[cut:])
+                                return current_route + ending_stops[cut:]
+
+                            skip = True
                             break
 
-                    if suc:
-                        print('  Found answer with option', s, route)
-                        alt_index += 2
-                        current_route += route
-                        if search_type == 'stops':
-                            print('We are done here, calling from candidates')
-                            cut = ending_stops.index(route[-1])
-                            print(current_route + ending_stops[cut:])
-                            return current_route + ending_stops[cut:]
-                        break
-
-            # If no road still, lets trey recursive search?
-            if not skip:
-                print('  Now looking for (recursiv):', altered_roads[alt_index+1])
-                success, route = searcher(current_stop, target_road=altered_roads[alt_index+1], recursion_depth=4)
-                if not success:
-                    print('  Cant find', altered_roads[alt_index+1], 'recursively, continuing along current road')
-                else:
-                    print('  Success - found alt road', altered_roads[alt_index+1], 'recursively')
-                    current_route += route[1:]
-                    print('  ', current_route)
-                    skip = True
+                # If no road still, lets trey recursive search?
+                if not skip:
+                    print('  Now looking for (recursiv):', altered_roads[alt_index+1])
+                    success, route = searcher(current_stop, target_road=altered_roads[alt_index+1], recursion_depth=4)
+                    if not success:
+                        print('  Cant find', altered_roads[alt_index+1], 'recursively, continuing along current road')
+                    else:
+                        print('  Success - found alt road', altered_roads[alt_index+1], 'recursively')
+                        current_route += route[1:]
+                        print('  ', current_route)
+                        alt_index += 1
+                        skip = True
 
 
             # If no road still, continue on current road
@@ -255,10 +260,12 @@ def main(original_stops, altered_roads):
                         skip = True
                         break
 
-            # If we cant find current road to continue on, lets check if last road is actually a stop name?
-            if not skip:
-                print(f'  Can\'t continue along current road {altered_roads[alt_index]}, next options change to wrong road')
-                for s in current_route:
+            ### If we cant find current road to continue on, lets check if last road is actually a stop name?
+            # actually, always check if last road is a stop name
+            # if not skip:
+            print(f'  Can\'t continue along current road {altered_roads[alt_index]}, next options change to wrong road')
+            for s in current_route:
+                if altered_roads[alt_index] != altered_roads[-1]:  # we are not on last road
                     if stops.get(s[:4], {'name': None})['name'] == altered_roads[alt_index+1]:  # get stop name with edgecase for Virtual stops
                         print(f'Last road ({altered_roads[alt_index+1]}) is same as stop:{s}/{stops[s[:4]]["name"]} at index {current_route.index(s)}!')
                         return current_route
@@ -269,9 +276,8 @@ def main(original_stops, altered_roads):
                 return current_route
 
 if __name__ == '__main__':
-    original_stops = ["401502","401504","401403","401301","401203","401103","401003","400803","400703","400603","413701","400503","400403","412103","400309","402803","415301","709005","700501","700603","701106","701204","701308","701406","701506","701608","709904","701706","701808","701906","600104","600204","600310","600314","607604","607704"]
-    original_roads = ["al.Krakowska","Gr\u00f3jecka","pl.Narutowicza","Filtrowa","Nowowiejska","pl.Konstytucji","Marsza\u0142kowska","pl.Bankowy","Andersa","Mickiewicza"]
-    altered_roads = 'P+R Al. Krakowska - … - Chałubińskiego - al. Jana Pawła II - Stawki - … - MARYMONT-POTOK'.split(' - ')[2:-2]
+    altered_roads = 'Nowowiejska – al.Niepodległości – Rakowiecka – Kielecka'.split(' – ')
+    original_stops = ["301206","301108","301004","300906","300804","300704","300606","300506","300404","300306","300206","300106","701004","701106","701204","701308","701406","701506","701608","709909","704701","116302","100308","106604","107102","107704","107804","107904","108004","108202","108304","108402","108504","108604","108804","108904","109002","109101"]
 
     result = main(original_stops, altered_roads)
     print(result)
